@@ -59,7 +59,7 @@ module OmniAuth
         session.delete 'omniauth.ldap'
         @ldap_user_info = {}
         begin
-          (@adaptor.bind(:allow_anonymous => true) unless @adaptor.bound?)
+          (@adaptor.bind(:allow_anonymous => false) unless @adaptor.bound?)
         rescue Exception => e
           puts "failed to bind with the default credentials: " + e.message
          end
