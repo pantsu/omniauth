@@ -67,7 +67,11 @@ module OmniAuth
         raise if @ldap_user_info.empty?
         bind_dn = creds['username']
         bind_dn = @ldap_user_info[:dn].to_a.first if @ldap_user_info[:dn]
-        @adaptor.bind(:bind_dn => bind_dn, :password => creds['password'], :allow_anonymous => false)
+        begin
+          @adaptor.bind(:bind_dn => bind_dn, :password => creds['password'], :allow_anonymous => false)
+        rescue Exception => e
+          return fail!(:invalid_credentials, e)
+        end
         @ldap_user_info = @adaptor.search(:filter => Net::LDAP::Filter.eq(@adaptor.uid, @name_proc.call(creds['username'])),:limit => 1) if @ldap_user_info.empty?
         @user_info = self.class.map_user(@@config, @ldap_user_info)
 
