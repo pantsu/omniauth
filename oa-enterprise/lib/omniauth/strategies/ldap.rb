@@ -70,6 +70,7 @@ module OmniAuth
         begin
           @adaptor.bind(:bind_dn => bind_dn, :password => creds['password'], :allow_anonymous => false)
         rescue Exception => e
+          @adaptor.unbind
           return fail!(:invalid_credentials, e)
         end
         @ldap_user_info = @adaptor.search(:filter => Net::LDAP::Filter.eq(@adaptor.uid, @name_proc.call(creds['username'])),:limit => 1) if @ldap_user_info.empty?
