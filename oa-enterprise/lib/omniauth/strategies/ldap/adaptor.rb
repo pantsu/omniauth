@@ -117,7 +117,7 @@ module OmniAuth
         end
 
         def connecting?
-          !@connection.nil? and !@disconnected
+          !!connection.instance_variable_get(:@conn) and !@disconnected
         end
 
         def bound?

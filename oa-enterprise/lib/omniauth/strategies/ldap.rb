@@ -64,13 +64,16 @@ module OmniAuth
           puts "failed to bind with the default credentials: " + e.message
          end
         @ldap_user_info = @adaptor.search(:filter => Net::LDAP::Filter.eq(@adaptor.uid, @name_proc.call(creds['username'])),:limit => 1) if @adaptor.bound?
+        raise if @ldap_user_info.empty?
         bind_dn = creds['username']
         bind_dn = @ldap_user_info[:dn].to_a.first if @ldap_user_info[:dn]
-        @adaptor.bind(:bind_dn => bind_dn, :password => creds['password'])
+        @adaptor.bind(:bind_dn => bind_dn, :password => creds['password'], :allow_anonymous => false)
         @ldap_user_info = @adaptor.search(:filter => Net::LDAP::Filter.eq(@adaptor.uid, @name_proc.call(creds['username'])),:limit => 1) if @ldap_user_info.empty?
         @user_info = self.class.map_user(@@config, @ldap_user_info)
 
         @env['omniauth.auth'] = auth_hash
+
+        @adaptor.unbind
 
         rescue Exception => e
           return fail!(:invalid_credentials, e)
