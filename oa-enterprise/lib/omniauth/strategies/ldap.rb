@@ -81,6 +81,8 @@ module OmniAuth
 
           @adaptor.unbind
 
+        @adaptor.unbind
+
         rescue Exception => e
           return fail!(:invalid_credentials, e)
         end
