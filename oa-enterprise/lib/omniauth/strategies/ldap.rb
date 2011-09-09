@@ -55,6 +55,7 @@ module OmniAuth
 
       def callback_phase
         begin
+        @adaptor.unbind
         creds = session['omniauth.ldap']
         session.delete 'omniauth.ldap'
         @ldap_user_info = {}
