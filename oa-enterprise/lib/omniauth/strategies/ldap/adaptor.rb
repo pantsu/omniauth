@@ -69,7 +69,7 @@ module OmniAuth
         end
 
         def unbind(options={})
-          @connection.close # Net::LDAP doesn't implement unbind.
+          @connection.close rescue nil # Net::LDAP doesn't implement unbind.
         end
 
         def bind(options={})
