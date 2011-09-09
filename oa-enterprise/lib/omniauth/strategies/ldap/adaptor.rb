@@ -36,7 +36,7 @@ module OmniAuth
           @logger = @configuration.delete(:logger)
           message = []
           MUST_HAVE_KEYS.each do |name|
-              message << name if configuration[name].nil?
+            message << name if configuration[name].nil?
           end
           raise ArgumentError.new(message.join(",") +" MUST be provided") unless message.empty?
           VALID_ADAPTER_CONFIGURATION_KEYS.each do |name|
@@ -60,12 +60,12 @@ module OmniAuth
           config[:encryption] = {:method => method} if method
 
           @connection, @uri, @with_start_tls = begin
-            uri = construct_uri(host, port, method == :simple_tls)
-            with_start_tls = method == :start_tls
-            [Net::LDAP::Connection.new(config), uri, with_start_tls]
-          rescue Net::LDAP::LdapError
-            raise ConnectionError, $!.message
-          end
+                                                 uri = construct_uri(host, port, method == :simple_tls)
+                                                 with_start_tls = method == :start_tls
+                                                 [Net::LDAP::Connection.new(config), uri, with_start_tls]
+                                               rescue Net::LDAP::LdapError
+                                                 raise ConnectionError, $!.message
+                                               end
         end
 
         def unbind(options={})
@@ -75,31 +75,31 @@ module OmniAuth
         def bind(options={})
           connect(options) unless connecting?
           begin
-          @bind_tried = true
+            @bind_tried = true
 
-          bind_dn = (options[:bind_dn] || @bind_dn).to_s
-          try_sasl = options.has_key?(:try_sasl) ? options[:try_sasl] : @try_sasl
-          if options.has_key?(:allow_anonymous)
-            allow_anonymous = options[:allow_anonymous]
-          else
-            allow_anonymous = @allow_anonymous
-          end
-          # Rough bind loop:
-          # Attempt 1: SASL if available
-          # Attempt 2: SIMPLE with credentials if password block
-          # Attempt 3: SIMPLE ANONYMOUS if 1 and 2 fail and allow anonymous is set to true
-          if try_sasl and sasl_bind(bind_dn, options)
-            puts "bound with sasl"
-          elsif simple_bind(bind_dn, options)
-            puts "bound with simple"
-          elsif allow_anonymous and bind_as_anonymous(options)
-            puts "bound as anonymous"
-          else
-            message = yield if block_given?
-            message ||= ('All authentication methods for %s exhausted.') % target
-            raise AuthenticationError, message
-          end
-          @bound = true
+            bind_dn = (options[:bind_dn] || @bind_dn).to_s
+            try_sasl = options.has_key?(:try_sasl) ? options[:try_sasl] : @try_sasl
+            if options.has_key?(:allow_anonymous)
+              allow_anonymous = options[:allow_anonymous]
+            else
+              allow_anonymous = @allow_anonymous
+            end
+            # Rough bind loop:
+            # Attempt 1: SASL if available
+            # Attempt 2: SIMPLE with credentials if password block
+            # Attempt 3: SIMPLE ANONYMOUS if 1 and 2 fail and allow anonymous is set to true
+            if try_sasl and sasl_bind(bind_dn, options)
+              puts "bound with sasl"
+            elsif simple_bind(bind_dn, options)
+              puts "bound with simple"
+            elsif allow_anonymous and bind_as_anonymous(options)
+              puts "bound as anonymous"
+            else
+              message = yield if block_given?
+              message ||= ('All authentication methods for %s exhausted.') % target
+              raise AuthenticationError, message
+            end
+            @bound = true
           rescue Net::LDAP::LdapError
             raise AuthenticationError, $!.message
           end
@@ -173,42 +173,42 @@ module OmniAuth
         end
 
         def ensure_method(method)
-            method ||= "plain"
-            normalized_method = method.to_s.downcase.to_sym
-            return METHOD[normalized_method] if METHOD.has_key?(normalized_method)
+          method ||= "plain"
+          normalized_method = method.to_s.downcase.to_sym
+          return METHOD[normalized_method] if METHOD.has_key?(normalized_method)
 
-            available_methods = METHOD.keys.collect {|m| m.inspect}.join(", ")
-            format = "%s is not one of the available connect methods: %s"
-            raise ConfigurationError, format % [method.inspect, available_methods]
+          available_methods = METHOD.keys.collect {|m| m.inspect}.join(", ")
+          format = "%s is not one of the available connect methods: %s"
+          raise ConfigurationError, format % [method.inspect, available_methods]
         end
 
         def sasl_bind(bind_dn, options={})
           sasl_mechanisms = options[:sasl_mechanisms] || @sasl_mechanisms
-            sasl_mechanisms.each do |mechanism|
-              begin
-                normalized_mechanism = mechanism.downcase.gsub(/-/, '_')
-                sasl_bind_setup = "sasl_bind_setup_#{normalized_mechanism}"
-                next unless respond_to?(sasl_bind_setup, true)
-                initial_credential, challenge_response = send(sasl_bind_setup, bind_dn, options)
+          sasl_mechanisms.each do |mechanism|
+            begin
+              normalized_mechanism = mechanism.downcase.gsub(/-/, '_')
+              sasl_bind_setup = "sasl_bind_setup_#{normalized_mechanism}"
+              next unless respond_to?(sasl_bind_setup, true)
+              initial_credential, challenge_response = send(sasl_bind_setup, bind_dn, options)
 
-                args = {
-                  :method => :sasl,
-                  :initial_credential => initial_credential,
-                  :mechanism => mechanism,
-                  :challenge_response => challenge_response,
-                }
+              args = {
+                :method => :sasl,
+                :initial_credential => initial_credential,
+                :mechanism => mechanism,
+                :challenge_response => challenge_response,
+              }
 
-                info = {
-                  :name => "bind: SASL", :dn => bind_dn, :mechanism => mechanism,
-                }
+              info = {
+                :name => "bind: SASL", :dn => bind_dn, :mechanism => mechanism,
+              }
 
-                execute(:bind, args)
-                return true
+              execute(:bind, args)
+              return true
 
-              rescue Exception => e
-                puts e.message
-              end
+            rescue Exception => e
+              puts e.message
             end
+          end
           false
         end
 

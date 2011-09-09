@@ -55,31 +55,31 @@ module OmniAuth
 
       def callback_phase
         begin
-        @adaptor.unbind
-        creds = session['omniauth.ldap']
-        session.delete 'omniauth.ldap'
-        @ldap_user_info = {}
-        begin
-          (@adaptor.bind(:allow_anonymous => false) unless @adaptor.bound?)
-        rescue Exception => e
-          puts "failed to bind with the default credentials: " + e.message
-         end
-        @ldap_user_info = @adaptor.search(:filter => Net::LDAP::Filter.eq(@adaptor.uid, @name_proc.call(creds['username'])),:limit => 1) if @adaptor.bound?
-        raise if @ldap_user_info.empty?
-        bind_dn = creds['username']
-        bind_dn = @ldap_user_info[:dn].to_a.first if @ldap_user_info[:dn]
-        begin
-          @adaptor.bind(:bind_dn => bind_dn, :password => creds['password'], :allow_anonymous => false)
-        rescue Exception => e
           @adaptor.unbind
-          return fail!(:invalid_credentials, e)
-        end
-        @ldap_user_info = @adaptor.search(:filter => Net::LDAP::Filter.eq(@adaptor.uid, @name_proc.call(creds['username'])),:limit => 1) if @ldap_user_info.empty?
-        @user_info = self.class.map_user(@@config, @ldap_user_info)
+          creds = session['omniauth.ldap']
+          session.delete 'omniauth.ldap'
+          @ldap_user_info = {}
+          begin
+            (@adaptor.bind(:allow_anonymous => false) unless @adaptor.bound?)
+          rescue Exception => e
+            puts "failed to bind with the default credentials: " + e.message
+          end
+          @ldap_user_info = @adaptor.search(:filter => Net::LDAP::Filter.eq(@adaptor.uid, @name_proc.call(creds['username'])),:limit => 1) if @adaptor.bound?
+          raise if @ldap_user_info.empty?
+          bind_dn = creds['username']
+          bind_dn = @ldap_user_info[:dn].to_a.first if @ldap_user_info[:dn]
+          begin
+            @adaptor.bind(:bind_dn => bind_dn, :password => creds['password'], :allow_anonymous => false)
+          rescue Exception => e
+            @adaptor.unbind
+            return fail!(:invalid_credentials, e)
+          end
+          @ldap_user_info = @adaptor.search(:filter => Net::LDAP::Filter.eq(@adaptor.uid, @name_proc.call(creds['username'])),:limit => 1) if @ldap_user_info.empty?
+          @user_info = self.class.map_user(@@config, @ldap_user_info)
 
-        @env['omniauth.auth'] = auth_hash
+          @env['omniauth.auth'] = auth_hash
 
-        @adaptor.unbind
+          @adaptor.unbind
 
         rescue Exception => e
           return fail!(:invalid_credentials, e)
@@ -89,33 +89,33 @@ module OmniAuth
 
       def auth_hash
         OmniAuth::Utils.deep_merge(super, {
-          'uid' => @user_info["uid"],
-          'user_info' => @user_info,
-          'extra' => @ldap_user_info
-        })
+            'uid' => @user_info["uid"],
+            'user_info' => @user_info,
+            'extra' => @ldap_user_info
+          })
       end
 
-    def self.map_user(mapper, object)
-      user = {}
-      mapper.each do |key, value|
-        case value
-        when String
-          user[key] = object[value.downcase.to_sym].to_s if object[value.downcase.to_sym]
-        when Array
-          value.each {|v| (user[key] = object[v.downcase.to_sym].to_s; break;) if object[v.downcase.to_sym]}
-        when Hash
-          value.map do |key1, value1|
-            pattern = key1.dup
-            value1.each_with_index do |v,i|
-              part = '';
-              v.each {|v1| (part = object[v1.downcase.to_sym].to_s; break;) if object[v1.downcase.to_sym]}
-              pattern.gsub!("%#{i}",part||'')
+      def self.map_user(mapper, object)
+        user = {}
+        mapper.each do |key, value|
+          case value
+          when String
+            user[key] = object[value.downcase.to_sym].to_s if object[value.downcase.to_sym]
+          when Array
+            value.each {|v| (user[key] = object[v.downcase.to_sym].to_s; break;) if object[v.downcase.to_sym]}
+          when Hash
+            value.map do |key1, value1|
+              pattern = key1.dup
+              value1.each_with_index do |v,i|
+                part = '';
+                v.each {|v1| (part = object[v1.downcase.to_sym].to_s; break;) if object[v1.downcase.to_sym]}
+                pattern.gsub!("%#{i}",part||'')
+              end
+              user[key] = pattern
             end
-            user[key] = pattern
           end
         end
-      end
-      user
+        user
       end
     end
   end
